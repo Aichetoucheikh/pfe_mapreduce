@@ -1,0 +1,13 @@
+data/
+results/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+*.log
+.DS_Store
+.vscode/
+data/
+results/
+.ipynb_checkpoints/
+__pycache__/
+.DS_Store

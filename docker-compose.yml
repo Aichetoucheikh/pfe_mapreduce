@@ -1,0 +1,108 @@
+version: '3.8'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PFE-M 2026 — Sujet 2 MapReduce | Mac M3 (ARM64) + Docker
+# ─────────────────────────────────────────────────────────────────────────────
+# Cluster simulé :
+#   spark-master   → Coordinateur  (UI : http://localhost:8080)
+#   spark-worker-1 → Nœud de calcul 1
+#   spark-worker-2 → Nœud de calcul 2
+#   jupyter        → Notebook d'analyse (http://localhost:8888)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── SPARK MASTER ────────────────────────────────────────────────────────────
+  spark-master:
+    image: bitnami/spark:latest
+    platform: linux/arm64          # ← Natif Apple Silicon M3
+    container_name: spark-master
+    hostname: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_MASTER_WEBUI_PORT=8080
+    ports:
+      - "8080:8080"    # Spark Master UI   → http://localhost:8080
+      - "7077:7077"    # Port de connexion des workers
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./results:/app/results
+    networks:
+      - spark-network
+
+  # ── SPARK WORKER 1 ──────────────────────────────────────────────────────────
+  spark-worker-1:
+    image: bitnami/spark:latest
+    platform: linux/arm64
+    container_name: spark-worker-1
+    hostname: spark-worker-1
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+    depends_on:
+      - spark-master
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./results:/app/results
+    networks:
+      - spark-network
+
+  # ── SPARK WORKER 2 ──────────────────────────────────────────────────────────
+  spark-worker-2:
+    image: bitnami/spark:latest
+    platform: linux/arm64
+    container_name: spark-worker-2
+    hostname: spark-worker-2
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+    depends_on:
+      - spark-master
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./results:/app/results
+    networks:
+      - spark-network
+
+  # ── JUPYTER NOTEBOOK ────────────────────────────────────────────────────────
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    platform: linux/arm64
+    container_name: jupyter-pyspark
+    hostname: jupyter
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=pfe2026          # Mot de passe : pfe2026
+    ports:
+      - "8888:8888"    # Jupyter Lab    → http://localhost:8888
+      - "4040:4040"    # Spark App UI   → http://localhost:4040
+    volumes:
+      - ./notebooks:/home/jovyan/work/notebooks
+      - ./src:/home/jovyan/work/src
+      - ./data:/home/jovyan/work/data
+      - ./results:/home/jovyan/work/results
+      - ./docs:/home/jovyan/work/docs
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+
+networks:
+  spark-network:
+    driver: bridge
