@@ -1,6 +1,6 @@
 # Rapport de Projet Big Data — Sujet 2 : Analyse de Rentabilité via MapReduce Natif
 
-**Établissement** : Université Libanaise Internationale (LIU) — Master Big Data 2026  
+**Établissement** : Université Libanaise Internationale (LIU) — Master 2026  
 **Étudiante** : Aichetou Cheikh (Matricule : 12310014)  
 **Encadrant** : Dr El Benany Med Mahmoud  
 
